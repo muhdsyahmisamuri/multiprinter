@@ -9,7 +9,7 @@
       "dependencies": [
         "enum_to_string",
         "flutter",
-        "image_v3",
+        "image",
         "network_info_plus",
         "ping_discover_network_forked",
         "rxdart"
@@ -63,8 +63,8 @@
       ]
     },
     {
-      "name": "image_v3",
-      "version": "3.3.0",
+      "name": "image",
+      "version": "4.7.2",
       "dependencies": [
         "archive",
         "meta",
@@ -218,10 +218,11 @@
     },
     {
       "name": "archive",
-      "version": "3.6.1",
+      "version": "4.0.7",
       "dependencies": [
         "crypto",
-        "path"
+        "path",
+        "posix"
       ]
     },
     {
@@ -321,6 +322,15 @@
       "dependencies": [
         "collection",
         "meta"
+      ]
+    },
+    {
+      "name": "posix",
+      "version": "6.0.3",
+      "dependencies": [
+        "ffi",
+        "meta",
+        "path"
       ]
     },
     {

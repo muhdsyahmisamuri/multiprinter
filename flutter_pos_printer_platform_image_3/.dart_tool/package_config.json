@@ -3,7 +3,7 @@
   "packages": [
     {
       "name": "archive",
-      "rootUri": "file:///Users/bizapp/.pub-cache/hosted/pub.dev/archive-3.6.1",
+      "rootUri": "file:///Users/bizapp/.pub-cache/hosted/pub.dev/archive-4.0.7",
       "packageUri": "lib/",
       "languageVersion": "3.0"
     },
@@ -92,10 +92,10 @@
       "languageVersion": "3.8"
     },
     {
-      "name": "image_v3",
-      "rootUri": "file:///Users/bizapp/.pub-cache/hosted/pub.dev/image_v3-3.3.0",
+      "name": "image",
+      "rootUri": "file:///Users/bizapp/.pub-cache/hosted/pub.dev/image-4.7.2",
       "packageUri": "lib/",
-      "languageVersion": "2.15"
+      "languageVersion": "3.0"
     },
     {
       "name": "leak_tracker",
@@ -172,6 +172,12 @@
     {
       "name": "plugin_platform_interface",
       "rootUri": "file:///Users/bizapp/.pub-cache/hosted/pub.dev/plugin_platform_interface-2.1.8",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    },
+    {
+      "name": "posix",
+      "rootUri": "file:///Users/bizapp/.pub-cache/hosted/pub.dev/posix-6.0.3",
       "packageUri": "lib/",
       "languageVersion": "3.0"
     },

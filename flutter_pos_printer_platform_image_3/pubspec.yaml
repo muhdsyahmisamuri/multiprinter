@@ -4,7 +4,7 @@ version: 1.2.4
 homepage: https://github.com/diantahoc/flutter_pos_printer_platform
 
 environment:
-  sdk: '>=3.1.0 <4.0.0'
+  sdk: ">=3.1.0 <4.0.0"
   flutter: ">=1.20.0"
 
 dependencies:
@@ -13,7 +13,7 @@ dependencies:
 
   # flutter_star_prnt: ^2.3.6
   enum_to_string: ^2.0.1
-  image_v3: ^3.3.0
+  image: ^4.3.0
   network_info_plus: ^6.1.4
   ping_discover_network_forked: ^0.0.1
   rxdart: ^0.27.7
