@@ -135,15 +135,15 @@
     },
     {
       "name": "network_info_plus",
-      "rootUri": "file:///Users/bizapp/.pub-cache/hosted/pub.dev/network_info_plus-4.1.0+1",
+      "rootUri": "file:///Users/bizapp/.pub-cache/hosted/pub.dev/network_info_plus-6.1.4",
       "packageUri": "lib/",
       "languageVersion": "2.18"
     },
     {
       "name": "network_info_plus_platform_interface",
-      "rootUri": "file:///Users/bizapp/.pub-cache/hosted/pub.dev/network_info_plus_platform_interface-1.1.3",
+      "rootUri": "file:///Users/bizapp/.pub-cache/hosted/pub.dev/network_info_plus_platform_interface-2.0.2",
       "packageUri": "lib/",
-      "languageVersion": "2.12"
+      "languageVersion": "2.18"
     },
     {
       "name": "nm",
