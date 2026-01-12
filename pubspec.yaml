@@ -1,0 +1,47 @@
+name: multiprinter
+description: A Flutter package for multi-printer management supporting Bluetooth, TCP/LAN, and USB printers with simultaneous printing capabilities.
+version: 1.0.0
+homepage: https://github.com/bizapp/multiprinter
+repository: https://github.com/bizapp/multiprinter
+
+environment:
+  sdk: ^3.9.2
+  flutter: ">=3.10.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Printer packages
+  pos_universal_printer: ^0.2.10
+  flutter_pos_printer_platform_image_3:
+    path: flutter_pos_printer_platform_image_3
+
+  # State management
+  provider: ^6.1.2
+
+  # Dependency injection
+  get_it: ^8.0.3
+
+  # Functional programming
+  dartz: ^0.10.1
+
+  # Equality
+  equatable: ^2.0.7
+
+  # UUID generation
+  uuid: ^4.5.1
+
+  # Permission handling
+  permission_handler: ^12.0.1
+
+  # Local storage
+  shared_preferences: ^2.3.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true

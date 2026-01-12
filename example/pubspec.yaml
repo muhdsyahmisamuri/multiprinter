@@ -1,0 +1,22 @@
+name: multiprinter_example
+description: A comprehensive example demonstrating all features of the multiprinter package.
+
+publish_to: "none"
+
+environment:
+  sdk: ^3.9.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  multiprinter:
+    path: ../
+  provider: ^6.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
