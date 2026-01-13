@@ -214,7 +214,7 @@ class PrinterDataSource {
   /// Scan for Bluetooth devices
   Future<List<PrinterDeviceModel>> scanBluetoothDevices() async {
     try {
-      final List<PrinterDeviceModel> result = [];
+      final Map<String, PrinterDeviceModel> result = {};
       final completer = Completer<List<PrinterDeviceModel>>();
 
       // Listen to the stream and collect devices with timeout
@@ -235,8 +235,10 @@ class PrinterDataSource {
               final deviceName = device.name.isNotEmpty
                   ? device.name
                   : 'Unknown Bluetooth Printer';
-              result.add(
-                PrinterDeviceModel(
+              
+              // Use deviceId as key to prevent duplicates
+              if (!result.containsKey(deviceId)) {
+                result[deviceId] = PrinterDeviceModel(
                   id: deviceId,
                   name: deviceName,
                   address: PrinterAddress.bluetooth(addr ?? ''),
@@ -246,12 +248,12 @@ class PrinterDataSource {
                     PrintDocumentType.receipt,
                     PrintDocumentType.sticker,
                   ],
-                ),
-              );
+                );
+              }
             },
             onDone: () {
               if (!completer.isCompleted) {
-                completer.complete(result);
+                completer.complete(result.values.toList());
               }
             },
             onError: (error) {
@@ -265,7 +267,7 @@ class PrinterDataSource {
       Future.delayed(const Duration(seconds: 10), () {
         subscription.cancel();
         if (!completer.isCompleted) {
-          completer.complete(result);
+          completer.complete(result.values.toList());
         }
       });
 
@@ -386,7 +388,7 @@ class PrinterDataSource {
   /// Scan for USB devices (Android only)
   Future<List<PrinterDeviceModel>> scanUsbDevices() async {
     try {
-      final List<PrinterDeviceModel> foundPrinters = [];
+      final Map<String, PrinterDeviceModel> foundPrinters = {};
       final completer = Completer<List<PrinterDeviceModel>>();
 
       // Clear old cache
@@ -408,8 +410,9 @@ class PrinterDataSource {
               // Cache the actual device for later use
               _scannedUsbDevices[deviceId] = device;
 
-              foundPrinters.add(
-                PrinterDeviceModel(
+              // Use deviceId as key to prevent duplicates
+              if (!foundPrinters.containsKey(deviceId)) {
+                foundPrinters[deviceId] = PrinterDeviceModel(
                   id: deviceId,
                   name: deviceName,
                   address: PrinterAddress.usb(deviceId),
@@ -419,12 +422,12 @@ class PrinterDataSource {
                     PrintDocumentType.receipt,
                     PrintDocumentType.sticker,
                   ],
-                ),
-              );
+                );
+              }
             },
             onDone: () {
               if (!completer.isCompleted) {
-                completer.complete(foundPrinters);
+                completer.complete(foundPrinters.values.toList());
               }
             },
             onError: (error) {
@@ -438,7 +441,7 @@ class PrinterDataSource {
       Future.delayed(const Duration(seconds: 5), () {
         subscription.cancel();
         if (!completer.isCompleted) {
-          completer.complete(foundPrinters);
+          completer.complete(foundPrinters.values.toList());
         }
       });
 

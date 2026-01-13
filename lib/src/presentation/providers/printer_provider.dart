@@ -121,7 +121,7 @@ class PrinterProvider extends ChangeNotifier {
       (failure) =>
           _setState(PrinterProviderState.error, error: failure.message),
       (printers) {
-        _scannedPrinters = printers;
+        _scannedPrinters = _mergeScannedPrinters(printers);
         _setState(PrinterProviderState.success);
       },
     );
@@ -135,7 +135,7 @@ class PrinterProvider extends ChangeNotifier {
       (failure) =>
           _setState(PrinterProviderState.error, error: failure.message),
       (printers) {
-        _scannedPrinters = [..._scannedPrinters, ...printers];
+        _scannedPrinters = _mergeScannedPrinters(printers);
         _setState(PrinterProviderState.success);
       },
     );
@@ -149,10 +149,38 @@ class PrinterProvider extends ChangeNotifier {
       (failure) =>
           _setState(PrinterProviderState.error, error: failure.message),
       (printers) {
-        _scannedPrinters = [..._scannedPrinters, ...printers];
+        _scannedPrinters = _mergeScannedPrinters(printers);
         _setState(PrinterProviderState.success);
       },
     );
+  }
+
+  /// Merge new printers with existing scanned printers, avoiding duplicates.
+  /// Uses printer ID and address to identify duplicates.
+  List<PrinterDevice> _mergeScannedPrinters(List<PrinterDevice> newPrinters) {
+    final Map<String, PrinterDevice> merged = {};
+    
+    // Add existing printers first
+    for (final printer in _scannedPrinters) {
+      merged[printer.id] = printer;
+    }
+    
+    // Add or update with new printers
+    for (final printer in newPrinters) {
+      // Check by ID first
+      if (!merged.containsKey(printer.id)) {
+        // Also check by address to catch printers with different IDs but same address
+        final existingByAddress = merged.values.where(
+          (p) => p.address.address == printer.address.address,
+        ).firstOrNull;
+        
+        if (existingByAddress == null) {
+          merged[printer.id] = printer;
+        }
+      }
+    }
+    
+    return merged.values.toList();
   }
 
   Future<void> scanAllPrinters() async {

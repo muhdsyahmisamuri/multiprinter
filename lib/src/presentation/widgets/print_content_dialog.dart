@@ -327,6 +327,7 @@ class _PrintContentDialogState extends State<PrintContentDialog> {
             Expanded(
               child: DropdownButtonFormField<int>(
                 value: _fontSize,
+                isExpanded: true,
                 decoration: const InputDecoration(
                   labelText: 'Font Size',
                   isDense: true,
