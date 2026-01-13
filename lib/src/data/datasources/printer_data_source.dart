@@ -1089,10 +1089,27 @@ class PrinterDataSource {
         tspl.barcode(
           marginLeft,
           currentY,
-          'CODE128',
+          '128', // TSPL code type for Code 128
           40, // height in dots
-          1, // human readable
+          1, // human readable (1=left aligned text below barcode)
           content.barcode!,
+          narrow: 2,
+          wide: 5,
+        );
+        currentY += 6 * dotsPerMm; // Space after barcode
+      }
+
+      // Add QR code if provided
+      if (content.qrCode != null && content.qrCode!.isNotEmpty) {
+        currentY += 2 * dotsPerMm;
+        tspl.qrcode(
+          marginLeft,
+          currentY,
+          'M', // Error correction level: L, M, Q, H
+          4, // Cell/module width (1-10)
+          'A', // Auto mode
+          0, // No rotation
+          content.qrCode!,
         );
       }
 

@@ -136,6 +136,7 @@ class StickerContent extends PrintContent {
   final int height;
   final int gap;
   final String? barcode;
+  final String? qrCode;
   final int density;
   final int fontSize; // 1=small, 2=medium, 3=large, 4=extra large
 
@@ -150,6 +151,7 @@ class StickerContent extends PrintContent {
     this.height = PrinterConstants.defaultStickerHeight,
     this.gap = PrinterConstants.defaultStickerGap,
     this.barcode,
+    this.qrCode,
     this.density = 8,
     this.fontSize = 3,
   }) : super(documentType: PrintDocumentType.sticker);
@@ -166,6 +168,7 @@ class StickerContent extends PrintContent {
     height,
     gap,
     barcode,
+    qrCode,
     density,
     fontSize,
     documentType,

@@ -103,6 +103,9 @@ class TsplBuilder {
   /// [codeType] - barcode type: 128, 128M, EAN128, 25, 25C, 39, 39C, 93, EAN13, EAN8, CODA, POST, UPCA, UPCE, etc.
   /// [height] - barcode height in dots
   /// [humanReadable] - 0=no text, 1=align left, 2=align center, 3=align right
+  /// [rotation] - rotation: 0, 90, 180, 270 degrees
+  /// [narrow] - narrow bar width in dots (1-10, default 2)
+  /// [wide] - wide bar width in dots (1-10, default 5)
   /// [content] - barcode data
   void barcode(
     int x,
@@ -110,9 +113,12 @@ class TsplBuilder {
     String codeType,
     int height,
     int humanReadable,
-    String content,
-  ) {
-    _buffer.write('BARCODE $x,$y,"$codeType",$height,$humanReadable,0,2,2,"$content"$_eol');
+    String content, {
+    int rotation = 0,
+    int narrow = 2,
+    int wide = 5,
+  }) {
+    _buffer.write('BARCODE $x,$y,"$codeType",$height,$humanReadable,$rotation,$narrow,$wide,"$content"$_eol');
   }
 
   /// Print QR code at position

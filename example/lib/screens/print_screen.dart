@@ -543,6 +543,7 @@ class _PrintScreenState extends State<PrintScreen> {
       notes: 'Less ice, extra sweet',
       quantity: 1,
       barcode: '123456789',
+      qrCode: 'ORDER-1234',
     );
 
     provider.printStickerToSelected(sticker);

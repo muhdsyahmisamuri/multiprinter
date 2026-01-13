@@ -37,6 +37,7 @@ class _PrintContentDialogState extends State<PrintContentDialog> {
   final _additionsController = TextEditingController(text: 'Oat Milk');
   final _notesController = TextEditingController(text: 'Less Ice');
   final _barcodeController = TextEditingController();
+  final _qrCodeController = TextEditingController();
   int _quantity = 1;
   int _labelWidth = PrinterConstants.defaultStickerWidth;
   int _labelHeight = PrinterConstants.defaultStickerHeight;
@@ -63,6 +64,7 @@ class _PrintContentDialogState extends State<PrintContentDialog> {
     _additionsController.dispose();
     _notesController.dispose();
     _barcodeController.dispose();
+    _qrCodeController.dispose();
     for (final item in _receiptItems) {
       item.dispose();
     }
@@ -258,8 +260,17 @@ class _PrintContentDialogState extends State<PrintContentDialog> {
           controller: _barcodeController,
           decoration: const InputDecoration(
             labelText: 'Barcode (optional)',
-            prefixIcon: Icon(Icons.qr_code),
+            prefixIcon: Icon(Icons.barcode_reader),
             hintText: 'e.g., 123456789',
+          ),
+        ),
+        const SizedBox(height: 12),
+        TextFormField(
+          controller: _qrCodeController,
+          decoration: const InputDecoration(
+            labelText: 'QR Code (optional)',
+            prefixIcon: Icon(Icons.qr_code),
+            hintText: 'e.g., https://example.com or order-123',
           ),
         ),
         const SizedBox(height: 16),
@@ -441,6 +452,7 @@ class _PrintContentDialogState extends State<PrintContentDialog> {
         height: _labelHeight,
         gap: _labelGap,
         barcode: _barcodeController.text.isNotEmpty ? _barcodeController.text : null,
+        qrCode: _qrCodeController.text.isNotEmpty ? _qrCodeController.text : null,
         density: _density,
         fontSize: _fontSize,
       );
