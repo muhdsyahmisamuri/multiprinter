@@ -445,21 +445,29 @@ class PrinterProvider extends ChangeNotifier {
   }
 
   /// Print a test page to a single printer
-  Future<void> printTestPage(PrinterDevice printer) async {
+  /// 
+  /// [paperWidth] - Paper width in mm (58 or 80 are common). Defaults to 58mm.
+  /// This affects the divider line length for proper formatting.
+  Future<void> printTestPage(PrinterDevice printer, {int paperWidth = PrinterConstants.defaultReceiptWidth}) async {
     _setState(PrinterProviderState.printing);
+
+    // Calculate characters per line based on paper width
+    // 58mm paper = ~32 chars, 80mm paper = ~48 chars
+    final charsPerLine = paperWidth >= 80 ? 48 : 32;
 
     final testReceipt = ReceiptContent(
       storeName: '*** TEST PRINT ***',
       storeAddress: 'Connection Test',
       lines: [
-        ReceiptLine.divider(),
+        ReceiptLine.divider(length: charsPerLine),
         ReceiptLine.text('Printer: ${printer.name}', alignment: ReceiptTextAlign.center),
         ReceiptLine.text('Address: ${printer.address.formattedAddress}', alignment: ReceiptTextAlign.center),
         ReceiptLine.text('Type: ${printer.connectionType.name.toUpperCase()}', alignment: ReceiptTextAlign.center),
-        ReceiptLine.divider(),
+        ReceiptLine.text('Paper: ${paperWidth}mm ($charsPerLine chars)', alignment: ReceiptTextAlign.center),
+        ReceiptLine.divider(length: charsPerLine),
         ReceiptLine.text('If you see this,', alignment: ReceiptTextAlign.center),
         ReceiptLine.text('printing works!', alignment: ReceiptTextAlign.center, bold: true),
-        ReceiptLine.divider(),
+        ReceiptLine.divider(length: charsPerLine),
         ReceiptLine.text('Time: ${DateTime.now()}', alignment: ReceiptTextAlign.center),
       ],
       footer: '*** END TEST ***',
