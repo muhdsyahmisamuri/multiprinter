@@ -355,6 +355,12 @@ class PrinterProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Clear the list of scanned printers
+  void clearScannedPrinters() {
+    _scannedPrinters = [];
+    notifyListeners();
+  }
+
   bool isPrinterSelected(PrinterDevice printer) {
     return _selectedPrinters.any((p) => p.id == printer.id);
   }
