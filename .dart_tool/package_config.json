@@ -3,7 +3,7 @@
   "packages": [
     {
       "name": "archive",
-      "rootUri": "file:///Users/bizapp/.pub-cache/hosted/pub.dev/archive-3.6.1",
+      "rootUri": "file:///Users/bizapp/.pub-cache/hosted/pub.dev/archive-4.0.9",
       "packageUri": "lib/",
       "languageVersion": "3.0"
     },
@@ -134,10 +134,10 @@
       "languageVersion": "3.0"
     },
     {
-      "name": "image_v3",
-      "rootUri": "file:///Users/bizapp/.pub-cache/hosted/pub.dev/image_v3-3.3.0",
+      "name": "image",
+      "rootUri": "file:///Users/bizapp/.pub-cache/hosted/pub.dev/image-4.8.0",
       "packageUri": "lib/",
-      "languageVersion": "2.15"
+      "languageVersion": "3.0"
     },
     {
       "name": "leak_tracker",
@@ -306,6 +306,12 @@
       "rootUri": "file:///Users/bizapp/.pub-cache/hosted/pub.dev/pos_universal_printer_ios-0.1.0",
       "packageUri": "lib/",
       "languageVersion": "3.2"
+    },
+    {
+      "name": "posix",
+      "rootUri": "file:///Users/bizapp/.pub-cache/hosted/pub.dev/posix-6.5.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
     },
     {
       "name": "provider",

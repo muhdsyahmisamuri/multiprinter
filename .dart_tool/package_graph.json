@@ -120,7 +120,7 @@
       "dependencies": [
         "enum_to_string",
         "flutter",
-        "image_v3",
+        "image",
         "network_info_plus",
         "ping_discover_network_forked",
         "rxdart"
@@ -394,15 +394,6 @@
       ]
     },
     {
-      "name": "image_v3",
-      "version": "3.3.0",
-      "dependencies": [
-        "archive",
-        "meta",
-        "xml"
-      ]
-    },
-    {
       "name": "enum_to_string",
       "version": "2.2.1",
       "dependencies": []
@@ -554,17 +545,15 @@
       ]
     },
     {
+      "name": "ffi",
+      "version": "2.1.4",
+      "dependencies": []
+    },
+    {
       "name": "win32",
       "version": "5.15.0",
       "dependencies": [
         "ffi"
-      ]
-    },
-    {
-      "name": "nm",
-      "version": "0.5.0",
-      "dependencies": [
-        "dbus"
       ]
     },
     {
@@ -577,25 +566,10 @@
       ]
     },
     {
-      "name": "ffi",
-      "version": "2.1.4",
-      "dependencies": []
-    },
-    {
-      "name": "xml",
-      "version": "6.6.1",
+      "name": "nm",
+      "version": "0.5.0",
       "dependencies": [
-        "collection",
-        "meta",
-        "petitparser"
-      ]
-    },
-    {
-      "name": "archive",
-      "version": "3.6.1",
-      "dependencies": [
-        "crypto",
-        "path"
+        "dbus"
       ]
     },
     {
@@ -627,6 +601,20 @@
       ]
     },
     {
+      "name": "xml",
+      "version": "6.6.1",
+      "dependencies": [
+        "collection",
+        "meta",
+        "petitparser"
+      ]
+    },
+    {
+      "name": "args",
+      "version": "2.7.0",
+      "dependencies": []
+    },
+    {
       "name": "petitparser",
       "version": "7.0.1",
       "dependencies": [
@@ -635,9 +623,30 @@
       ]
     },
     {
-      "name": "args",
-      "version": "2.7.0",
-      "dependencies": []
+      "name": "image",
+      "version": "4.8.0",
+      "dependencies": [
+        "archive",
+        "meta",
+        "xml"
+      ]
+    },
+    {
+      "name": "archive",
+      "version": "4.0.9",
+      "dependencies": [
+        "path",
+        "posix"
+      ]
+    },
+    {
+      "name": "posix",
+      "version": "6.5.0",
+      "dependencies": [
+        "ffi",
+        "meta",
+        "path"
+      ]
     }
   ],
   "configVersion": 1

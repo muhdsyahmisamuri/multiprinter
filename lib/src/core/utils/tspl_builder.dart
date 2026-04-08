@@ -182,6 +182,19 @@ class TsplBuilder {
     _buffer.write('EOP$_eol');
   }
 
+  /// Print a monochrome bitmap image.
+  ///
+  /// [x], [y]: upper-left corner in dots.
+  /// [widthBytes]: number of bytes per row (⌈pixel_width / 8⌉).
+  /// [height]: image height in dots.
+  /// [mode]: 0 = overwrite, 1 = OR, 2 = XOR.
+  /// [bitmapHex]: hex-encoded bitmap rows, two chars per byte,
+  ///   MSB = leftmost dot; TSPL convention 0 = dark, 1 = light.
+  void bitmap(
+      int x, int y, int widthBytes, int height, int mode, String bitmapHex) {
+    _buffer.write('BITMAP $x,$y,$widthBytes,$height,$mode,$bitmapHex$_eol');
+  }
+
   /// Get the command string
   String getCommandString() {
     return _buffer.toString();

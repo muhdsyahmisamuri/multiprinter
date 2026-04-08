@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'package:flutter_pos_printer_platform_image_3/flutter_pos_printer_platform_image_3.dart'
     as pos_printer;
 import 'package:pos_universal_printer/pos_universal_printer.dart' hide TsplBuilder;
@@ -20,7 +22,11 @@ const String _printersStorageKey = 'registered_printers';
 
 /// Data source for printer operations using pos_universal_printer and flutter_pos_printer_platform
 class PrinterDataSource {
-  final PosUniversalPrinter _printer;
+  // Null on iOS: pos_universal_printer's iOS plugin does not register the
+  // EventChannel it subscribes to on construction, causing MissingPluginException.
+  // On iOS, Bluetooth is handled via BluetoothPrinterConnector (libGSDK) and
+  // TCP/LAN printers use direct sockets — pos_universal_printer is not needed.
+  final PosUniversalPrinter? _printer;
   final Uuid _uuid;
   final Map<String, domain.PrinterDevice> _connectedPrinters = {};
   final List<PrinterDeviceModel> _registeredPrinters = [];
@@ -47,7 +53,7 @@ class PrinterDataSource {
   bool _networkWarmedUp = false;
 
   PrinterDataSource({PosUniversalPrinter? printer, Uuid? uuid})
-    : _printer = printer ?? PosUniversalPrinter.instance,
+    : _printer = Platform.isAndroid ? (printer ?? PosUniversalPrinter.instance) : null,
       _uuid = uuid ?? const Uuid();
 
   /// Initialize the data source and load persisted printers
@@ -154,8 +160,12 @@ class PrinterDataSource {
     });
   }
 
-  /// Initialize the printer plugin to prevent crashes on activity destroy
+  /// Initialize the printer plugin to prevent crashes on activity destroy.
+  /// This is an Android-only workaround; on iOS the plugin initialises
+  /// differently and calling USB discovery would fall through to TCP discovery,
+  /// triggering a full subnet scan and flooding the console with SocketExceptions.
   void _initializePrinterPlugin() {
+    if (!Platform.isAndroid) return;
     try {
       // Briefly trigger USB discovery to initialize the plugin's internal services
       // This prevents "lateinit property bluetoothService has not been initialized"
@@ -213,6 +223,7 @@ class PrinterDataSource {
 
   /// Scan for Bluetooth devices
   Future<List<PrinterDeviceModel>> scanBluetoothDevices() async {
+    if (_printer == null) return [];
     try {
       final Map<String, PrinterDeviceModel> result = {};
       final completer = Completer<List<PrinterDeviceModel>>();
@@ -800,7 +811,7 @@ class PrinterDataSource {
           port: printer.address.port ?? PrinterConstants.defaultTcpPort,
         );
 
-        await _printer.registerDevice(role, device);
+        await _printer?.registerDevice(role, device);
       }
 
       final connectedPrinter = printer.copyWith(
@@ -883,7 +894,7 @@ class PrinterDataSource {
 
       // Print lines
       for (final line in content.lines) {
-        _printReceiptLine(builder, line);
+        await _printReceiptLine(builder, line);
       }
 
       // Footer
@@ -922,15 +933,15 @@ class PrinterDataSource {
           await _printToTcpPrinter(EscPosHelper.openDrawer(), printer);
         }
       } else {
-        // Use pos_universal_printer for Bluetooth
+        // Use pos_universal_printer for Bluetooth (Android only)
         final role = _mapRole(printer.role);
-        _printer.printEscPos(role, builder);
+        _printer?.printEscPos(role, builder);
 
         // Open cash drawer if needed (send separately)
         if (content.openCashDrawer) {
           final drawerBuilder = EscPosBuilder();
           drawerBuilder.raster(EscPosHelper.openDrawer());
-          _printer.printEscPos(role, drawerBuilder);
+          _printer?.printEscPos(role, drawerBuilder);
         }
       }
     } catch (e) {
@@ -941,7 +952,13 @@ class PrinterDataSource {
     }
   }
 
-  void _printReceiptLine(EscPosBuilder builder, ReceiptLine line) {
+  // Regex patterns for size-encoded fields from the editor.
+  // Format: BRCH{height}|{data}, QRMS{module}|{data}, IMGW{widthPct}|{base64}
+  static final _barcodeRe = RegExp(r'^BRCH(\d+)\|(.*)$', dotAll: true);
+  static final _qrRe = RegExp(r'^QRMS(\d+)\|(.*)$', dotAll: true);
+  static final _imageRe = RegExp(r'^IMGW(\d+)\|(.*)$', dotAll: true);
+
+  Future<void> _printReceiptLine(EscPosBuilder builder, ReceiptLine line) async {
     switch (line.lineType) {
       case ReceiptLineType.text:
         builder.text(
@@ -967,18 +984,65 @@ class PrinterDataSource {
         builder.text(line.text, align: PosAlign.left);
         break;
       case ReceiptLineType.barcode:
-        builder.barcode(line.text);
-        builder.feed(1);
+        // Decode height if encoded by editor: BRCH{heightDots}|{data}
+        final bm = _barcodeRe.firstMatch(line.text);
+        final barcodeHeight = bm != null ? int.tryParse(bm.group(1)!) ?? 80 : 80;
+        final barcodeData = bm != null ? bm.group(2)! : line.text;
+        if (barcodeData.isNotEmpty) {
+          // Build raw ESC/POS bytes so we can set a custom height (GS h).
+          final dataBytes = utf8.encode(barcodeData);
+          builder.raster([
+            0x1D, 0x68, barcodeHeight.clamp(1, 255), // GS h <n>: barcode height
+            0x1D, 0x6B, 0x49, dataBytes.length,       // GS k 73: Code128
+            ...dataBytes,
+          ]);
+          builder.feed(1);
+        }
         break;
       case ReceiptLineType.qrCode:
-        builder.qrCode(line.text);
-        builder.feed(1);
+        // Decode module size if encoded by editor: QRMS{module}|{data}
+        final qm = _qrRe.firstMatch(line.text);
+        final moduleSize = qm != null ? (int.tryParse(qm.group(1)!) ?? 4).clamp(1, 8) : 4;
+        final qrData = qm != null ? qm.group(2)! : line.text;
+        if (qrData.isNotEmpty) {
+          // Build raw ESC/POS QR bytes with variable module size.
+          final qrBytes = utf8.encode(qrData);
+          final pL = (qrBytes.length + 3) % 256;
+          final pH = (qrBytes.length + 3) ~/ 256;
+          builder.raster([
+            0x1D, 0x28, 0x6B, pL, pH, 0x31, 0x50, 0x30, ...qrBytes, // Store data
+            0x1D, 0x28, 0x6B, 0x04, 0x00, 0x31, 0x41, 0x32, 0x00,   // Model 2
+            0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x43, moduleSize,   // Module size
+            0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x45, 0x01,         // ECC level M
+            0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x51, 0x30,         // Print
+          ]);
+          builder.feed(1);
+        }
         break;
       case ReceiptLineType.empty:
         builder.feed(1);
         break;
       case ReceiptLineType.image:
-        // Image printing requires bitmap data
+        // Decode width% if encoded by editor: IMGW{widthPct}|{base64}
+        // Falls back to full-width (384 dots) for unencoded images.
+        if (line.text.isNotEmpty) {
+          try {
+            final im = _imageRe.firstMatch(line.text);
+            final widthPct = im != null ? (int.tryParse(im.group(1)!) ?? 100) : 100;
+            final base64Data = im != null ? im.group(2)! : line.text;
+            // 384 dots = 58 mm at 8 dots/mm (standard 58mm roll)
+            final maxWidth = (384 * widthPct / 100).round().clamp(40, 384);
+            final raw = base64Decode(base64Data);
+            final raster = await _imageBytesToEscPosRaster(raw, maxWidth: maxWidth);
+            if (raster.isNotEmpty) {
+              builder.feed(1);
+              builder.raster(raster);
+              builder.feed(1);
+            }
+          } catch (_) {
+            // Silently skip if image conversion fails.
+          }
+        }
         break;
     }
   }
@@ -999,9 +1063,9 @@ class PrinterDataSource {
           await _printToTcpPrinter(bytes, printer);
           break;
         case PrinterConnectionType.bluetooth:
-          // For Bluetooth, use pos_universal_printer
+          // For Bluetooth, use pos_universal_printer (Android only)
           final role = _mapRole(printer.role);
-          _printer.printRaw(role, bytes);
+          _printer?.printRaw(role, bytes);
           break;
       }
     } catch (e) {
@@ -1127,10 +1191,10 @@ class PrinterDataSource {
         // Use direct TCP connection for network printers
         await _printToTcpPrinter(bytes, printer);
       } else {
-        // Send TSPL command string to printer using pos_universal_printer (Bluetooth)
+        // Send TSPL command string to printer using pos_universal_printer (Bluetooth, Android only)
         final role = _mapRole(printer.role);
         final payload = String.fromCharCodes(bytes);
-        _printer.printTspl(role, payload);
+        _printer?.printTspl(role, payload);
       }
     } catch (e) {
       throw PrintJobException(
@@ -1210,6 +1274,69 @@ class PrinterDataSource {
       case ReceiptTextAlign.right:
         return PosAlign.right;
     }
+  }
+
+  // ── Image → ESC/POS GS v 0 raster ─────────────────────────────────────────
+  //
+  // CompatImageUtils.rawBytesToRaster has an off-by-8× bug: it stores the
+  // pixel width in the xL/xH header bytes, but GS v 0 requires the number of
+  // *bytes* per row (⌈pixels / 8⌉). This private helper fixes that.
+  static Future<Uint8List> _imageBytesToEscPosRaster(
+    Uint8List imageBytes, {
+    int maxWidth = 384,
+    int threshold = 160,
+  }) async {
+    final codec = await ui.instantiateImageCodec(imageBytes);
+    final frame = await codec.getNextFrame();
+    final img = frame.image;
+
+    final targetWidth = img.width > maxWidth ? maxWidth : img.width;
+    final scale = targetWidth / img.width;
+    final targetHeight = (img.height * scale).round();
+
+    // Scale via Canvas so we don't need an external image package.
+    final recorder = ui.PictureRecorder();
+    final canvas = ui.Canvas(recorder);
+    canvas.scale(scale);
+    canvas.drawImage(img, ui.Offset.zero, ui.Paint());
+    final picture = recorder.endRecording();
+    final resized = await picture.toImage(targetWidth, targetHeight);
+    final byteData =
+        await resized.toByteData(format: ui.ImageByteFormat.rawRgba);
+    if (byteData == null) return Uint8List(0);
+
+    final pixels = byteData.buffer.asUint8List();
+    // Each row is ⌈width/8⌉ bytes — this is what GS v 0 xL/xH must encode.
+    final bytesPerRow = (targetWidth / 8).ceil();
+
+    final result = <int>[
+      0x1D, 0x76, 0x30, 0x00, // GS v 0, mode=normal
+      bytesPerRow % 256,
+      bytesPerRow ~/ 256,
+      targetHeight % 256,
+      targetHeight ~/ 256,
+    ];
+
+    for (int y = 0; y < targetHeight; y++) {
+      for (int b = 0; b < bytesPerRow; b++) {
+        int byte = 0;
+        for (int bit = 0; bit < 8; bit++) {
+          final px = b * 8 + bit;
+          if (px < targetWidth) {
+            final idx = (y * targetWidth + px) * 4;
+            final r = pixels[idx];
+            final g = pixels[idx + 1];
+            final bl = pixels[idx + 2];
+            final lum = (0.299 * r + 0.587 * g + 0.114 * bl).round();
+            // ESC/POS: 1 = print (dark), 0 = no print (light). MSB = left dot.
+            if (lum < threshold) byte |= (0x80 >> bit);
+          }
+        }
+        result.add(byte);
+      }
+    }
+
+    return Uint8List.fromList(result);
   }
 }
 

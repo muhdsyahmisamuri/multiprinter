@@ -128,7 +128,7 @@ class PrintersScreen extends StatelessWidget {
                 provider.registeredPrinters.length.toString(),
                 Icons.print,
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 8),
               _buildSummaryItem(
                 context,
                 'Connected',
@@ -136,7 +136,7 @@ class PrintersScreen extends StatelessWidget {
                 Icons.check_circle,
                 color: Colors.green,
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 8),
               _buildSummaryItem(
                 context,
                 'Selected',
@@ -148,6 +148,10 @@ class PrintersScreen extends StatelessWidget {
               // Select all / Clear selection
               if (provider.registeredPrinters.isNotEmpty)
                 TextButton.icon(
+                  style: TextButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                  ),
                   onPressed: provider.selectedPrinters.length ==
                           provider.registeredPrinters.length
                       ? provider.clearSelection

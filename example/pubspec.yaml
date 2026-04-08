@@ -3,15 +3,20 @@ description: A comprehensive example demonstrating all features of the multiprin
 
 publish_to: "none"
 
+project_name: multiprinter_example
+version: 1.0.0+0
+
 environment:
   sdk: ^3.9.2
 
 dependencies:
   flutter:
     sdk: flutter
+  image_picker: ^1.2.1
   multiprinter:
     path: ../
   provider: ^6.1.2
+  qr_flutter: ^4.1.0
 
 dev_dependencies:
   flutter_test:

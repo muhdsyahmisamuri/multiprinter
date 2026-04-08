@@ -115,44 +115,44 @@ class _PermissionRequestWidgetState extends State<PermissionRequestWidget> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.security, size: 80, color: colorScheme.primary),
-            const SizedBox(height: 24),
-            Text(
-              'Permissions Required',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const SizedBox(height: 16),
+          Icon(Icons.security, size: 80, color: colorScheme.primary),
+          const SizedBox(height: 24),
+          Text(
+            'Permissions Required',
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
             ),
-            const SizedBox(height: 12),
-            Text(
-              'This app needs the following permissions to connect to printers:',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'This app needs the following permissions to connect to printers:',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
             ),
-            const SizedBox(height: 24),
-            _buildPermissionList(),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: _requestPermissions,
-              icon: const Icon(Icons.check_circle_outline),
-              label: const Text('Grant Permissions'),
-            ),
-            const SizedBox(height: 12),
-            TextButton(
-              onPressed: () => _permissionService.openSettings(),
-              child: const Text('Open Settings'),
-            ),
-          ],
-        ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          _buildPermissionList(),
+          const SizedBox(height: 24),
+          FilledButton.icon(
+            onPressed: _requestPermissions,
+            icon: const Icon(Icons.check_circle_outline),
+            label: const Text('Grant Permissions'),
+          ),
+          const SizedBox(height: 12),
+          TextButton(
+            onPressed: () => _permissionService.openSettings(),
+            child: const Text('Open Settings'),
+          ),
+          const SizedBox(height: 16),
+        ],
       ),
     );
   }

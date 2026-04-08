@@ -23,7 +23,8 @@ A new Flutter plugin project.
   s.frameworks = ["SystemConfiguration", "CoreTelephony","WebKit"]
   s.vendored_libraries = '**/*.a'
 
-  # Flutter.framework does not contain a i386 slice.
-  # s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES', 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386' }
+  # libGSDK.a arm64 slice targets iOS device, not simulator; exclude arm64 on simulator so x86_64 (Rosetta) is used instead.
+  s.pod_target_xcconfig = { 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'arm64' }
+  s.user_target_xcconfig = { 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'arm64' }
   # s.swift_version = '5.0'
 end

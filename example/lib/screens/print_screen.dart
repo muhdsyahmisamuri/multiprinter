@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:multiprinter/multiprinter.dart';
 import 'package:provider/provider.dart';
 
+import 'receipt_editor_screen.dart';
+import 'sticker_editor_screen.dart';
+
 /// Screen for printing receipts and stickers
 class PrintScreen extends StatefulWidget {
   const PrintScreen({super.key});
@@ -88,31 +91,37 @@ class _PrintScreenState extends State<PrintScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Receipt printing card
+                // Receipt editor card
                 _buildPrintOptionCard(
                   context,
                   theme,
                   icon: Icons.receipt_long,
-                  title: 'Print Receipt',
-                  subtitle: 'Create and print a POS receipt with items',
+                  title: 'Edit & Print Receipt',
+                  subtitle: 'WYSIWYG editor — design your receipt, then print',
                   color: Colors.blue,
-                  onTap: provider.selectedPrinters.isEmpty || provider.isLoading
-                      ? null
-                      : () => _showPrintReceiptDialog(context, provider),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const ReceiptEditorScreen(),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 12),
 
-                // Sticker printing card
+                // Sticker editor card
                 _buildPrintOptionCard(
                   context,
                   theme,
                   icon: Icons.label,
-                  title: 'Print Sticker',
-                  subtitle: 'Create and print a product label/sticker',
+                  title: 'Edit & Print Label',
+                  subtitle: 'WYSIWYG canvas editor — drag elements, then print',
                   color: Colors.orange,
-                  onTap: provider.selectedPrinters.isEmpty || provider.isLoading
-                      ? null
-                      : () => _showPrintStickerDialog(context, provider),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const StickerEditorScreen(),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 24),
 
@@ -459,30 +468,6 @@ class _PrintScreenState extends State<PrintScreen> {
       case PrinterConnectionType.usb:
         return Icons.usb;
     }
-  }
-
-  void _showPrintReceiptDialog(BuildContext context, PrinterProvider provider) {
-    showDialog(
-      context: context,
-      builder: (context) => PrintContentDialog(
-        documentType: PrintDocumentType.receipt,
-        onPrint: (content) {
-          provider.printReceiptToSelected(content as ReceiptContent);
-        },
-      ),
-    );
-  }
-
-  void _showPrintStickerDialog(BuildContext context, PrinterProvider provider) {
-    showDialog(
-      context: context,
-      builder: (context) => PrintContentDialog(
-        documentType: PrintDocumentType.sticker,
-        onPrint: (content) {
-          provider.printStickerToSelected(content as StickerContent);
-        },
-      ),
-    );
   }
 
   void _printTestReceipt(BuildContext context, PrinterProvider provider) {
