@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.multiprinter_example"
+    namespace = "com.example.multiprinter"
     compileSdk = 36  // Required by permission_handler_android and shared_preferences_android
     ndkVersion = flutter.ndkVersion
 
@@ -21,7 +21,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.multiprinter_example"
+        applicationId = "com.example.multiprinter"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion  // Required for Bluetooth LE support

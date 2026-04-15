@@ -1,9 +1,9 @@
-name: multiprinter_example
+name: multiprinter
 description: A comprehensive example demonstrating all features of the multiprinter package.
 
 publish_to: "none"
 
-project_name: multiprinter_example
+project_name: multiprinter
 version: 1.0.0+0
 
 environment:
@@ -13,7 +13,8 @@ dependencies:
   flutter:
     sdk: flutter
   image_picker: ^1.2.1
-  multiprinter:
+  shared_preferences: ^2.3.0
+  multiprinter_package:
     path: ../
   provider: ^6.1.2
   qr_flutter: ^4.1.0

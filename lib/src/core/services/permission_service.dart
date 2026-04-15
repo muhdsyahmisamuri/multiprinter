@@ -11,13 +11,6 @@ class PermissionService {
   Future<bool> hasAllPermissions() async {
     final bluetoothPermissions = await hasBluetoothPermissions();
     final locationPermissions = await hasLocationPermissions();
-    
-    // On Android 12+, also check nearby devices permission
-    if (Platform.isAndroid) {
-      final nearbyDevices = await Permission.nearbyWifiDevices.isGranted;
-      return bluetoothPermissions && locationPermissions && nearbyDevices;
-    }
-    
     return bluetoothPermissions && locationPermissions;
   }
 
@@ -57,10 +50,6 @@ class PermissionService {
     if (Platform.isAndroid) {
       final locationResult = await requestLocationPermissions();
       results['location'] = locationResult;
-
-      // Request Nearby Devices permission (Android 12+)
-      final nearbyResult = await requestNearbyDevicesPermission();
-      results['nearbyDevices'] = nearbyResult;
     }
 
     final allGranted = results.values.every((granted) => granted);
@@ -100,14 +89,6 @@ class PermissionService {
     return status.isGranted || status.isLimited;
   }
 
-  /// Request nearby devices permission (Android 12+)
-  Future<bool> requestNearbyDevicesPermission() async {
-    if (!Platform.isAndroid) return true;
-
-    final status = await Permission.nearbyWifiDevices.request();
-    return status.isGranted || status.isLimited;
-  }
-
   /// Check if permission is permanently denied
   Future<bool> isPermissionPermanentlyDenied(Permission permission) async {
     return await permission.isPermanentlyDenied;
@@ -144,7 +125,6 @@ class PermissionService {
       statuses['Bluetooth Scan'] = await Permission.bluetoothScan.status;
       statuses['Bluetooth Connect'] = await Permission.bluetoothConnect.status;
       statuses['Location'] = await Permission.locationWhenInUse.status;
-      statuses['Nearby Devices'] = await Permission.nearbyWifiDevices.status;
     }
 
     if (Platform.isIOS) {

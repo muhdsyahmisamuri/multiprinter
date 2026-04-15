@@ -29,14 +29,14 @@ dependencies:
 ### 1. Initialize the package
 
 ```dart
-import 'package:multiprinter/multiprinter.dart';
+import 'package:multiprinter_package/multiprinter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize MultiPrinter
   await MultiPrinter.init();
-  
+
   runApp(MyApp());
 }
 ```
@@ -45,7 +45,7 @@ void main() async {
 
 ```dart
 import 'package:provider/provider.dart';
-import 'package:multiprinter/multiprinter.dart';
+import 'package:multiprinter_package/multiprinter.dart';
 
 class MyApp extends StatelessWidget {
   @override
@@ -77,7 +77,7 @@ class MyHomePage extends StatelessWidget {
               onPressed: () => provider.scanBluetoothPrinters(),
               child: Text('Scan Bluetooth'),
             ),
-            
+
             // Display printers
             ListView.builder(
               itemCount: provider.registeredPrinters.length,
@@ -209,7 +209,7 @@ await provider.printReceiptToSelected(receipt);
 TCP printing includes automatic retry on failure:
 
 | Attempt | Timeout | Delay Before |
-|---------|---------|--------------|
+| ------- | ------- | ------------ |
 | 1st     | 8 sec   | -            |
 | 2nd     | 5 sec   | 200ms        |
 | 3rd     | 10 sec  | 200ms        |
@@ -268,8 +268,8 @@ final receipt = ReceiptContent(
   storeName: 'My Coffee Shop',
   storeAddress: '123 Main Street',
   lines: [
-    ReceiptLine.text('ORDER #1234', 
-      alignment: ReceiptTextAlign.center, 
+    ReceiptLine.text('ORDER #1234',
+      alignment: ReceiptTextAlign.center,
       bold: true,
       size: ReceiptTextSize.large,
     ),
@@ -299,14 +299,14 @@ await provider.printReceiptToSelected(receipt);
 
 ### Receipt Line Types
 
-| Type | Usage |
-|------|-------|
-| `ReceiptLine.text()` | Regular text with formatting |
+| Type                      | Usage                            |
+| ------------------------- | -------------------------------- |
+| `ReceiptLine.text()`      | Regular text with formatting     |
 | `ReceiptLine.leftRight()` | Two-column layout (item + price) |
-| `ReceiptLine.divider()` | Horizontal line separator |
-| `ReceiptLine.empty()` | Empty line for spacing |
-| `ReceiptLine.barcode()` | 1D barcode |
-| `ReceiptLine.qrCode()` | QR code |
+| `ReceiptLine.divider()`   | Horizontal line separator        |
+| `ReceiptLine.empty()`     | Empty line for spacing           |
+| `ReceiptLine.barcode()`   | 1D barcode                       |
+| `ReceiptLine.qrCode()`    | QR code                          |
 
 ---
 
@@ -339,26 +339,26 @@ await provider.printStickerToSelected(sticker);
 For custom label layouts, use `TsplBuilder` directly:
 
 ```dart
-import 'package:multiprinter/multiprinter.dart';
+import 'package:multiprinter_package/multiprinter.dart';
 
 final tspl = TsplBuilder()
   ..size(50, 30)           // 50x30mm label
   ..gap(2, 0)              // 2mm gap between labels
   ..density(8)             // medium darkness
   ..cls()                  // clear buffer
-  
+
   // Text at x=16, y=16 (in dots, 8 dots = 1mm)
   ..text(16, 16, 1, 0, 1, 1, 'Customer: John')
-  
+
   // Larger text for product name
   ..text(16, 48, 3, 0, 1, 1, 'Iced Latte')
-  
+
   // Barcode at x=16, y=100
   ..barcode(16, 100, 'CODE128', 40, 1, '12345678')
-  
+
   // QR code
   ..qrcode(150, 16, 'M', 4, 'A', 0, 'https://example.com')
-  
+
   // Print 1 copy
   ..printLabel(1);
 
@@ -368,19 +368,19 @@ final bytes = tspl.build();
 
 ### TSPL Commands Reference
 
-| Method | Description | Parameters |
-|--------|-------------|------------|
-| `size(w, h)` | Label size in mm | width, height |
-| `gap(d, o)` | Gap between labels | distance, offset (mm) |
-| `density(n)` | Print darkness | 1-15 |
-| `cls()` | Clear buffer | - |
-| `text(x, y, font, rot, xm, ym, text)` | Print text | position in dots |
-| `barcode(x, y, type, h, readable, data)` | 1D barcode | CODE128, EAN13, etc |
-| `qrcode(x, y, ecc, size, mode, rot, data)` | QR code | L/M/Q/H error correction |
-| `box(x, y, w, h, thickness)` | Rectangle | position and size |
-| `line(x, y, w, h)` | Line/bar | - |
-| `printLabel(qty)` | Print labels | quantity |
-| `build()` | Get command bytes | returns List<int> |
+| Method                                     | Description        | Parameters               |
+| ------------------------------------------ | ------------------ | ------------------------ |
+| `size(w, h)`                               | Label size in mm   | width, height            |
+| `gap(d, o)`                                | Gap between labels | distance, offset (mm)    |
+| `density(n)`                               | Print darkness     | 1-15                     |
+| `cls()`                                    | Clear buffer       | -                        |
+| `text(x, y, font, rot, xm, ym, text)`      | Print text         | position in dots         |
+| `barcode(x, y, type, h, readable, data)`   | 1D barcode         | CODE128, EAN13, etc      |
+| `qrcode(x, y, ecc, size, mode, rot, data)` | QR code            | L/M/Q/H error correction |
+| `box(x, y, w, h, thickness)`               | Rectangle          | position and size        |
+| `line(x, y, w, h)`                         | Line/bar           | -                        |
+| `printLabel(qty)`                          | Print labels       | quantity                 |
+| `build()`                                  | Get command bytes  | returns List<int>        |
 
 ### Coordinate System
 
@@ -471,30 +471,30 @@ await provider.printRawToSelected(tsplCommands.codeUnits);
 
 ### Raw Printing API Reference
 
-| Method | Description |
-|--------|-------------|
-| `printRawToSelected(List<int> bytes)` | Print raw bytes to all selected printers |
-| `printRawToPrinter(printer, List<int> bytes)` | Print raw bytes to a specific printer |
-| `printTsplToSelected(TsplBuilder builder)` | Print TSPL using TsplBuilder to selected printers |
-| `printTsplToPrinter(printer, TsplBuilder builder)` | Print TSPL to a specific printer |
+| Method                                             | Description                                       |
+| -------------------------------------------------- | ------------------------------------------------- |
+| `printRawToSelected(List<int> bytes)`              | Print raw bytes to all selected printers          |
+| `printRawToPrinter(printer, List<int> bytes)`      | Print raw bytes to a specific printer             |
+| `printTsplToSelected(TsplBuilder builder)`         | Print TSPL using TsplBuilder to selected printers |
+| `printTsplToPrinter(printer, TsplBuilder builder)` | Print TSPL to a specific printer                  |
 
 ### Common ESC/POS Commands
 
-| Command | Hex | Description |
-|---------|-----|-------------|
-| Initialize | `1B 40` | Reset printer |
-| Center align | `1B 61 01` | Align text center |
-| Left align | `1B 61 00` | Align text left |
-| Right align | `1B 61 02` | Align text right |
-| Bold on | `1B 45 01` | Enable bold |
-| Bold off | `1B 45 00` | Disable bold |
-| Double height | `1B 21 10` | Double height text |
-| Double width | `1B 21 20` | Double width text |
-| Normal | `1B 21 00` | Normal text |
-| Cut paper | `1D 56 00` | Full cut |
-| Partial cut | `1D 56 01` | Partial cut |
-| Open drawer | `1B 70 00 19 FA` | Open cash drawer |
-| Line feed | `0A` | New line |
+| Command       | Hex              | Description        |
+| ------------- | ---------------- | ------------------ |
+| Initialize    | `1B 40`          | Reset printer      |
+| Center align  | `1B 61 01`       | Align text center  |
+| Left align    | `1B 61 00`       | Align text left    |
+| Right align   | `1B 61 02`       | Align text right   |
+| Bold on       | `1B 45 01`       | Enable bold        |
+| Bold off      | `1B 45 00`       | Disable bold       |
+| Double height | `1B 21 10`       | Double height text |
+| Double width  | `1B 21 20`       | Double width text  |
+| Normal        | `1B 21 00`       | Normal text        |
+| Cut paper     | `1D 56 00`       | Full cut           |
+| Partial cut   | `1D 56 01`       | Partial cut        |
+| Open drawer   | `1B 70 00 19 FA` | Open cash drawer   |
+| Line feed     | `0A`             | New line           |
 
 ---
 
@@ -711,13 +711,13 @@ lib/
 ## Platform Support
 
 | Platform | Bluetooth | TCP/IP | USB |
-|----------|-----------|--------|-----|
-| Android  | ✅ | ✅ | ✅ |
-| iOS      | ✅ | ✅ | ❌ |
-| Windows  | ❌ | ✅ | ❌ |
-| macOS    | ❌ | ✅ | ❌ |
-| Linux    | ❌ | ✅ | ❌ |
-| Web      | ❌ | ❌ | ❌ |
+| -------- | --------- | ------ | --- |
+| Android  | ✅        | ✅     | ✅  |
+| iOS      | ✅        | ✅     | ❌  |
+| Windows  | ❌        | ✅     | ❌  |
+| macOS    | ❌        | ✅     | ❌  |
+| Linux    | ❌        | ✅     | ❌  |
+| Web      | ❌        | ❌     | ❌  |
 
 ---
 
@@ -765,6 +765,7 @@ lib/
 ### TCP Print Slow on First Attempt
 
 This is normal on Android due to network stack initialization. Solutions:
+
 1. Call `provider.warmUpConnections()` on app/screen init
 2. The built-in retry mechanism handles this automatically
 

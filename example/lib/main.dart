@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:multiprinter/multiprinter.dart';
+import 'package:multiprinter_package/multiprinter.dart';
 import 'package:provider/provider.dart';
 
 import 'screens/home_screen.dart';

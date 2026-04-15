@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 enum StickerElementType { text, barcode, qrCode, image }
@@ -47,6 +48,41 @@ class StickerElement {
       height: height ?? this.height,
       fontSize: fontSize ?? this.fontSize,
       imageBytes: clearImage ? null : (imageBytes ?? this.imageBytes),
+    );
+  }
+
+  // ── JSON serialisation ────────────────────────────────────────────────────
+
+  Map<String, dynamic> toJson() => {
+        'type': type.name,
+        'content': content,
+        'x': x,
+        'y': y,
+        'width': width,
+        'height': height,
+        'fontSize': fontSize,
+        'imageBytes': imageBytes != null ? base64Encode(imageBytes!) : null,
+      };
+
+  factory StickerElement.fromJson(Map<String, dynamic> j) {
+    Uint8List? img;
+    if (j['imageBytes'] != null) {
+      try {
+        img = base64Decode(j['imageBytes'] as String);
+      } catch (_) {}
+    }
+    return StickerElement(
+      type: StickerElementType.values.firstWhere(
+        (e) => e.name == j['type'],
+        orElse: () => StickerElementType.text,
+      ),
+      content: j['content'] as String? ?? '',
+      x: (j['x'] as num?)?.toDouble() ?? 2.0,
+      y: (j['y'] as num?)?.toDouble() ?? 2.0,
+      width: (j['width'] as num?)?.toDouble(),
+      height: (j['height'] as num?)?.toDouble(),
+      fontSize: j['fontSize'] as int? ?? 2,
+      imageBytes: img,
     );
   }
 

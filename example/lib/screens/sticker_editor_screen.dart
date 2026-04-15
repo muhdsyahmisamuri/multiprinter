@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:ui' as ui;
 
@@ -7,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:multiprinter/multiprinter.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/sticker_element.dart';
 
@@ -50,20 +52,120 @@ class _StickerEditorScreenState extends State<StickerEditorScreen> {
 
   double _scale = 4.0;
 
+  // ── Session persistence ───────────────────────────────────────────────────
+
+  static const _kSessionKey = 'sticker_editor_session';
+  bool _sessionReady = false;
+  Timer? _saveTimer;
+
+  @override
+  void setState(VoidCallback fn) {
+    super.setState(fn);
+    if (_sessionReady) {
+      _saveTimer?.cancel();
+      _saveTimer = Timer(const Duration(seconds: 2), _saveSession);
+    }
+  }
+
+  Future<void> _saveSession({bool showFeedback = false}) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final data = jsonEncode({
+        'labelWidth': _labelWidth,
+        'labelHeight': _labelHeight,
+        'labelGap': _labelGap,
+        'density': _density,
+        'quantity': _quantity,
+        'elements': _elements.map((e) => e.toJson()).toList(),
+      });
+      await prefs.setString(_kSessionKey, data);
+      if (showFeedback && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Session saved'),
+            duration: Duration(seconds: 1),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _loadSession() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_kSessionKey);
+      if (raw != null && mounted) {
+        final data = jsonDecode(raw) as Map<String, dynamic>;
+        setState(() {
+          _labelWidth = data['labelWidth'] as int? ?? 80;
+          _labelHeight = data['labelHeight'] as int? ?? 40;
+          _labelGap = data['labelGap'] as int? ?? 2;
+          _density = data['density'] as int? ?? 8;
+          _quantity = data['quantity'] as int? ?? 1;
+          _elements.clear();
+          for (final e in (data['elements'] as List? ?? [])) {
+            _elements
+                .add(StickerElement.fromJson(e as Map<String, dynamic>));
+          }
+          _sessionReady = true;
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Session restored'),
+              duration: Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+        return;
+      }
+    } catch (_) {}
+    if (mounted) setState(() => _sessionReady = true);
+  }
+
+  Future<void> _clearSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_kSessionKey);
+  }
+
+  void _resetToDefaults() {
+    setState(() {
+      _labelWidth = 80;
+      _labelHeight = 40;
+      _labelGap = 2;
+      _density = 8;
+      _quantity = 1;
+      _selectedIndex = null;
+      _elements.clear();
+      _elements.addAll([
+        StickerElement.newText(
+            content: 'Customer Name', x: 4, y: 4, fontSize: 3),
+        StickerElement.newText(
+            content: 'Product Name', x: 4, y: 12, fontSize: 2),
+        StickerElement.newBarcode(content: '123456789', x: 4, y: 22),
+      ]);
+    });
+  }
+
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
   @override
   void initState() {
     super.initState();
+    // Add defaults first so the first frame is never blank.
     _elements.addAll([
       StickerElement.newText(content: 'Customer Name', x: 4, y: 4, fontSize: 3),
       StickerElement.newText(content: 'Product Name', x: 4, y: 12, fontSize: 2),
       StickerElement.newBarcode(content: '123456789', x: 4, y: 22),
     ]);
+    Future.microtask(_loadSession);
   }
 
   @override
   void dispose() {
+    _saveTimer?.cancel();
     _propContentCtrl.dispose();
     _propXCtrl.dispose();
     _propYCtrl.dispose();
@@ -211,7 +313,6 @@ class _StickerEditorScreenState extends State<StickerEditorScreen> {
     final bytes = await _buildTsplBytes();
     if (!mounted) return;
     provider.printRawToSelected(bytes);
-    Navigator.of(context).pop();
   }
 
   Future<void> _pickImage() async {
@@ -238,6 +339,57 @@ class _StickerEditorScreenState extends State<StickerEditorScreen> {
             icon: const Icon(Icons.aspect_ratio),
             tooltip: 'Label Settings',
             onPressed: _showLabelSettingsSheet,
+          ),
+          PopupMenuButton<String>(
+            tooltip: 'More options',
+            onSelected: (v) async {
+              if (v == 'save') {
+                _saveTimer?.cancel();
+                await _saveSession(showFeedback: true);
+              } else if (v == 'reset') {
+                final ok = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Reset session?'),
+                    content: const Text(
+                        'This will clear the saved session and restore the default template.'),
+                    actions: [
+                      TextButton(
+                          onPressed: () => Navigator.pop(ctx, false),
+                          child: const Text('Cancel')),
+                      FilledButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          child: const Text('Reset')),
+                    ],
+                  ),
+                );
+                if (ok == true && mounted) {
+                  await _clearSession();
+                  _resetToDefaults();
+                }
+              }
+            },
+            itemBuilder: (_) => const [
+              PopupMenuItem(
+                value: 'save',
+                child: ListTile(
+                  leading: Icon(Icons.save_outlined),
+                  title: Text('Save session'),
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              PopupMenuDivider(),
+              PopupMenuItem(
+                value: 'reset',
+                child: ListTile(
+                  leading: Icon(Icons.restart_alt),
+                  title: Text('Reset to default'),
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+            ],
           ),
           Consumer<PrinterProvider>(
             builder: (context, provider, _) {

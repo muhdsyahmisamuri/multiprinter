@@ -1,8 +1,12 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:multiprinter/multiprinter.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/editor_receipt_element.dart';
 
@@ -50,6 +54,88 @@ class _ReceiptEditorScreenState extends State<ReceiptEditorScreen> {
   /// Used for converting drag deltas → display fractions.
   double _paperWidth = 260.0;
 
+  // ── Session persistence ───────────────────────────────────────────────────
+
+  static const _kSessionKey = 'receipt_editor_session';
+  /// True once the initial session load (or default setup) is complete.
+  /// Guards auto-save from firing before there is any real state to save.
+  bool _sessionReady = false;
+  Timer? _saveTimer;
+
+  @override
+  void setState(VoidCallback fn) {
+    super.setState(fn);
+    // Debounce: save 2 s after the last change.
+    if (_sessionReady && widget.initialContent == null) {
+      _saveTimer?.cancel();
+      _saveTimer = Timer(const Duration(seconds: 2), _saveSession);
+    }
+  }
+
+  Future<void> _saveSession({bool showFeedback = false}) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final data = jsonEncode({
+        'storeName': _storeNameCtrl.text,
+        'storeAddress': _storeAddressCtrl.text,
+        'footer': _footerCtrl.text,
+        'cutPaper': _cutPaper,
+        'openCashDrawer': _openCashDrawer,
+        'elements': _elements.map((e) => e.toJson()).toList(),
+      });
+      await prefs.setString(_kSessionKey, data);
+      if (showFeedback && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Session saved'),
+            duration: Duration(seconds: 1),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _loadSession() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_kSessionKey);
+      if (raw != null && mounted) {
+        final data = jsonDecode(raw) as Map<String, dynamic>;
+        setState(() {
+          _storeNameCtrl.text = data['storeName'] as String? ?? '';
+          _storeAddressCtrl.text = data['storeAddress'] as String? ?? '';
+          _footerCtrl.text = data['footer'] as String? ?? '';
+          _cutPaper = data['cutPaper'] as bool? ?? true;
+          _openCashDrawer = data['openCashDrawer'] as bool? ?? false;
+          _elements.clear();
+          for (final e in (data['elements'] as List? ?? [])) {
+            _elements.add(
+                EditorReceiptElement.fromJson(e as Map<String, dynamic>));
+          }
+          _sessionReady = true;
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Session restored'),
+              duration: Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+        return;
+      }
+    } catch (_) {}
+    // No saved session — keep the defaults that initState already set.
+    if (mounted) setState(() => _sessionReady = true);
+  }
+
+  Future<void> _clearSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_kSessionKey);
+  }
+
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
   @override
@@ -58,6 +144,7 @@ class _ReceiptEditorScreenState extends State<ReceiptEditorScreen> {
 
     final initial = widget.initialContent;
     if (initial != null) {
+      // When content is injected externally, use it directly — no session.
       _storeNameCtrl.text = initial.storeName ?? '';
       _storeAddressCtrl.text = initial.storeAddress ?? '';
       _footerCtrl.text = initial.footer ?? '';
@@ -66,7 +153,9 @@ class _ReceiptEditorScreenState extends State<ReceiptEditorScreen> {
       for (final line in initial.lines) {
         _elements.add(_lineToEditorElement(line));
       }
+      _sessionReady = true;
     } else {
+      // Set up defaults, then try to restore the last session.
       _storeNameCtrl.text = 'My Store';
       _storeAddressCtrl.text = '123 Main Street';
       _elements.addAll([
@@ -88,11 +177,14 @@ class _ReceiptEditorScreenState extends State<ReceiptEditorScreen> {
         EditorReceiptElement.newQrCode('https://example.com/receipt/1001'),
       ]);
       _footerCtrl.text = 'Thank you!';
+      // Load asynchronously so the first frame can render immediately.
+      Future.microtask(_loadSession);
     }
   }
 
   @override
   void dispose() {
+    _saveTimer?.cancel();
     _storeNameCtrl.dispose();
     _storeAddressCtrl.dispose();
     _footerCtrl.dispose();
@@ -153,7 +245,6 @@ class _ReceiptEditorScreenState extends State<ReceiptEditorScreen> {
 
   void _print(PrinterProvider provider) {
     provider.printReceiptToSelected(_buildContent());
-    Navigator.of(context).pop();
   }
 
   Future<void> _pickImage() async {
@@ -221,6 +312,80 @@ class _ReceiptEditorScreenState extends State<ReceiptEditorScreen> {
             icon: const Icon(Icons.tune),
             tooltip: 'Document Settings',
             onPressed: _showDocumentSettingsSheet,
+          ),
+          PopupMenuButton<String>(
+            tooltip: 'More options',
+            onSelected: (v) async {
+              if (v == 'save') {
+                _saveTimer?.cancel();
+                await _saveSession(showFeedback: true);
+              } else if (v == 'reset') {
+                final ok = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Reset session?'),
+                    content: const Text(
+                        'This will clear the saved session and restore the default template.'),
+                    actions: [
+                      TextButton(
+                          onPressed: () => Navigator.pop(ctx, false),
+                          child: const Text('Cancel')),
+                      FilledButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          child: const Text('Reset')),
+                    ],
+                  ),
+                );
+                if (ok == true && mounted) {
+                  await _clearSession();
+                  setState(() {
+                    _elements.clear();
+                    _elements.addAll([
+                      EditorReceiptElement.newText(
+                        text: 'ORDER #1001',
+                        alignment: ReceiptTextAlign.center,
+                        bold: true,
+                      ),
+                      EditorReceiptElement.newDivider(),
+                      EditorReceiptElement.newLeftRight(
+                          leftText: 'Item 1', rightText: '\$0.00'),
+                      EditorReceiptElement.newDivider(char: '='),
+                      EditorReceiptElement.newText(
+                        text: 'TOTAL: \$0.00',
+                        alignment: ReceiptTextAlign.center,
+                        bold: true,
+                      ),
+                      EditorReceiptElement.newEmpty(),
+                    ]);
+                    _storeNameCtrl.text = 'My Store';
+                    _storeAddressCtrl.text = '123 Main Street';
+                    _footerCtrl.text = 'Thank you!';
+                    _selectedIndex = null;
+                  });
+                }
+              }
+            },
+            itemBuilder: (_) => const [
+              PopupMenuItem(
+                value: 'save',
+                child: ListTile(
+                  leading: Icon(Icons.save_outlined),
+                  title: Text('Save session'),
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              PopupMenuDivider(),
+              PopupMenuItem(
+                value: 'reset',
+                child: ListTile(
+                  leading: Icon(Icons.restart_alt),
+                  title: Text('Reset to default'),
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+            ],
           ),
           Consumer<PrinterProvider>(
             builder: (context, provider, _) {

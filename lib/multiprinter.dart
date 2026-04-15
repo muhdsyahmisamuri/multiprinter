@@ -14,7 +14,7 @@
 /// ## Quick Start
 ///
 /// ```dart
-/// import 'package:multiprinter/multiprinter.dart';
+/// import 'package:multiprinter_package/multiprinter.dart';
 ///
 /// // Initialize the package
 /// await MultiPrinter.init();

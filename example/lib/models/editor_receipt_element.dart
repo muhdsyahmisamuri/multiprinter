@@ -154,6 +154,53 @@ class EditorReceiptElement {
         displayHeight: 80,
       );
 
+  // ── JSON serialisation ────────────────────────────────────────────────────
+
+  Map<String, dynamic> toJson() => {
+        'type': type.name,
+        'text': text,
+        'leftText': leftText,
+        'rightText': rightText,
+        'alignment': alignment.name,
+        'size': size.name,
+        'bold': bold,
+        'underline': underline,
+        'imageBytes': imageBytes != null ? base64Encode(imageBytes!) : null,
+        'displayWidth': displayWidth,
+        'displayHeight': displayHeight,
+      };
+
+  factory EditorReceiptElement.fromJson(Map<String, dynamic> j) {
+    Uint8List? img;
+    if (j['imageBytes'] != null) {
+      try {
+        img = base64Decode(j['imageBytes'] as String);
+      } catch (_) {}
+    }
+    return EditorReceiptElement(
+      type: ReceiptLineType.values.firstWhere(
+        (e) => e.name == j['type'],
+        orElse: () => ReceiptLineType.text,
+      ),
+      text: j['text'] as String? ?? '',
+      leftText: j['leftText'] as String? ?? '',
+      rightText: j['rightText'] as String? ?? '',
+      alignment: ReceiptTextAlign.values.firstWhere(
+        (e) => e.name == j['alignment'],
+        orElse: () => ReceiptTextAlign.left,
+      ),
+      size: ReceiptTextSize.values.firstWhere(
+        (e) => e.name == j['size'],
+        orElse: () => ReceiptTextSize.normal,
+      ),
+      bold: j['bold'] as bool? ?? false,
+      underline: j['underline'] as bool? ?? false,
+      imageBytes: img,
+      displayWidth: (j['displayWidth'] as num?)?.toDouble() ?? 1.0,
+      displayHeight: (j['displayHeight'] as num?)?.toDouble() ?? 80.0,
+    );
+  }
+
   bool get isResizable =>
       type == ReceiptLineType.barcode ||
       type == ReceiptLineType.qrCode ||

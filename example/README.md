@@ -1,3 +1,3 @@
-# multiprinter_example
+# multiprinter
 
 A new Flutter project.

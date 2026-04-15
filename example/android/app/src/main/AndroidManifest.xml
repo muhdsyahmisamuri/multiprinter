@@ -19,15 +19,12 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     
-    <!-- Nearby devices permission for Android 12+ -->
-    <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" android:usesPermissionFlags="neverForLocation" />
-    
     <!-- Optional: Bluetooth feature declaration -->
     <uses-feature android:name="android.hardware.bluetooth" android:required="false" />
     <uses-feature android:name="android.hardware.bluetooth_le" android:required="false" />
     
     <application
-        android:label="multiprinter_example"
+        android:label="multiprinter"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

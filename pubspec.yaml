@@ -1,4 +1,4 @@
-name: multiprinter
+name: multiprinter_package
 description: A Flutter package for multi-printer management supporting Bluetooth, TCP/LAN, and USB printers with simultaneous printing capabilities.
 version: 1.0.0
 homepage: https://github.com/bizapp/multiprinter

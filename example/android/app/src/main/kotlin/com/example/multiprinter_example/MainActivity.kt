@@ -1,4 +1,4 @@
-package com.example.multiprinter_example
+package com.example.multiprinter
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 
